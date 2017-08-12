@@ -1,12 +1,31 @@
 var express = require('express');
 var path = require('path');
-var app = express();
 
+var app = express();
 app.locals.pretty = true; // html 소스 표시를 계층구조로 표시하도록 합니다.
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/topic', function(req, res){
+	// res.json(req.query);	
+	var topics = [
+		'Javascript is ...',
+		'NodeJs is ...',
+		'Express is ...'
+	];
+	var output =`
+	<ul>
+		<li><a href="/topic?id=0">JavaScript</a></li>
+		<li><a href="/topic?id=1">Node.js</a></li>
+		<li><a href="/topic?id=2">Express</a></li>
+	</ul>
+	<hr />
+	<h1>${topics[req.query.id]}</h1>`;
+	
+	res.send(output);
+});
 
 app.get('/template', function(req, res) {
 	res.render('temp', {
