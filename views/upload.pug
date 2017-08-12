@@ -1,0 +1,44 @@
+doctype html
+html(lang='ko')
+	head
+		meta(charset='utf-8')
+		title 업로드 폼
+		style(type='text/css').
+			body { 
+				margin:0; padding:0;
+				background: #dfdfdf;
+				color: #333;
+			}
+			.container {
+				width: 600px;
+				margin: 20px auto;
+				padding: 10px;
+				background: #fff;
+			}
+			.container h1 {
+				text-align:center;
+			}
+			form {
+				display: block;
+				margin:10px auto;
+				padding:10px 20px;
+				background-color:#dfdfdf;
+				border:1px solid gray;
+			}
+			input[type=submit] {
+				font-size: 16px;
+				padding: 6px;
+				border:1px solid teal;
+				width:530px;
+				background-color: #3a8484;
+				color: white;
+				font-weight:bold';
+			}		
+	body
+		div.container
+			h1 Server Side Javascript
+			form(action='/upload' method='POST' enctype='multipart/form-data')
+				p
+					input(type='file' name='userfile')
+				p
+					input(type='submit' value="파일 전송")
