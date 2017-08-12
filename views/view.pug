@@ -1,5 +1,5 @@
 doctype html
-html
+html(lang='ko')
 	head
 		meta(charset='utf-8')
 		title 작성폼
@@ -18,6 +18,11 @@ html
 			.container h1 {
 				text-align:center;
 			}
+			.container .btn {
+				text-align: right;
+				padding: 5px 10px;
+			}
+			
 			.container ul {
 				list-style:none;
 				border:1px solid #dfdfdf;
@@ -27,7 +32,7 @@ html
 			.container li {
 				list-style:none;
 			}
-			.container a {
+			.container li a {
 				display:block;
 				font-size:1.2em;
 				color: teal;
@@ -36,10 +41,11 @@ html
 				padding: 5px 10px 5px 15px;
 				border-bottom:1px solid #dfdfdf;
 			}
-			.container a:hover {
+			.container li a:hover {
 				background-color: #DFDFDF;
 				font-weight:bold;
 			}
+
 			.container article {
 				border:1px solid #dfdfdf;
 				margin-top:10px;
@@ -52,9 +58,29 @@ html
 				padding: 0 10px 10px;
 				border-bottom: 1px solid #dfdfdf;
 			}
+			.container .btn a {
+				display:inline-block;
+				text-transform:uppercase;
+				text-decoration:none;
+				font-size:1.2em;
+				line-height:1.2em;
+				font-weight:bold;
+				padding:5px 10px;
+				background-color:#76797c;
+				color:#fff;
+				border-radius:4px;
+			}
+			.container .btn a:hover {
+				background-color:#7a6a56;
+			}
 	body
 		div.container
-			h1 Server Side JavaScript
+			h1 
+				Server Side JavaScript
+			div.btn
+				a(href='/topic') List
+				| &nbsp;&nbsp;
+				a(href='/topic/new') New
 			ul
 				each topic in topics
 					li

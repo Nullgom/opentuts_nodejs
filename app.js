@@ -14,33 +14,38 @@ app.use(bodyParser.urlencoded({ extended: false })); // application/x-www-form-u
 
 // 라우팅 설정
 app.get('/topic/new', function(req, res) {
-	res.render('new');
-});
-
-app.get('/topic/:id', function(req, res) {
-	var id = req.params.id;
-	fs.readFile('data/'+id, 'utf8', function(err, data) {
-		if(err) {
-			console.error(err);
-			res.status(500).send('Internal Server Error');
-		}
-		fs.readdir('data', function(err, files) {
-			if(err) {
-				console.error(err);
-				res.status(500).send('Internal Server Error');
-			}
-			res.render('view', { topics : files, title: id, description: data });
-		});
-	});
-});
-
-app.get('/topic', function(req, res) {
 	fs.readdir('data', function(err, files) {
 		if(err) {
 			console.error(err);
 			res.status(500).send('Internal Server Error');
 		}
-		res.render('view', { topics : files });
+		res.render('new', {topics: files});
+	});
+});
+
+app.get(['/topic', '/topic/:id'], function(req, res) {
+	
+	fs.readdir('data', function(err, files) {
+		if(err) {
+			console.error(err);
+			res.status(500).send('Internal Server Error');
+		}
+		var id = req.params.id;
+		if(id) { // id 값이 있을때 /topic/:id GET
+			fs.readFile('data/'+id, 'utf8', function(err, data) {
+				if(err) {
+					console.error(err);
+					res.status(500).send('Internal Server Error');
+				}
+				res.render('view', { topics : files, title: id, description: data });
+			});
+		} else { // id 값이 없을때 /topic GET
+			res.render('view', { 
+				topics : files, 
+				title: 'Welcome', 
+				description: 'Hello, JavaScript for server.'
+			});
+		}
 	});
 });
 

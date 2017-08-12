@@ -1,20 +1,76 @@
 doctype html
-html
+html(lang='ko')
 	head
 		meta(charset='utf-8')
 		title 작성폼
 		style(type='text/css').
+			body { 
+				margin:0; padding:0;
+				background: #dfdfdf;
+				color: #333;
+			}
+			.container {
+				width: 600px;
+				margin: 20px auto;
+				padding: 10px;
+				background: #fff;
+			}
+			.container h1 {
+				text-align:center;
+			}
+			.container .btn {
+				text-align: right;
+				padding: 5px 10px;
+			}
+			
+			.container ul {
+				list-style:none;
+				border:1px solid #dfdfdf;
+				border-bottom:0;
+				margin:0; padding:0;
+			}
+			.container li {
+				list-style:none;
+			}
+			.container li a {
+				display:block;
+				font-size:1.2em;
+				color: teal;
+				text-transform:capitalize;
+				text-decoration:none;
+				padding: 5px 10px 5px 15px;
+				border-bottom:1px solid #dfdfdf;
+			}
+			.container li a:hover {
+				background-color: #DFDFDF;
+				font-weight:bold;
+			}
+			.container .btn a {
+				display:inline-block;
+				text-transform:uppercase;
+				text-decoration:none;
+				font-size:1.2em;
+				line-height:1.2em;
+				font-weight:bold;
+				padding:5px 10px;
+				background-color:#76797c;
+				color:#fff;
+				border-radius:4px;
+			}
+			.container .btn a:hover {
+				background-color:#7a6a56;
+			}
+
 			form {
 				display: block;
-				width: 600px;
 				margin:10px auto;
-				padding:10px;
+				padding:10px 20px;
 				background-color:#dfdfdf;
 				border:1px solid gray;
 			}
 			input, textarea {
 				font-size: 16px;
-				width: 580px;
+				width: 520px;
 				padding: 6px;
 				border:1px solid teal;
 			}
@@ -22,19 +78,43 @@ html
 				height: 200px;
 			}
 			input[type=submit] {
-				width:590px;
+				width:530px;
 				background-color: #3a8484;
 				color: white;
 				font-weight:bold';
 			}
+		script.
+			function formSubmit() {
+				var form = document.myform;
+				if(!form.title.value) {
+					alert('제목을 입력하세요');
+					form.title.focus();
+					return false;
+				}
+				if(!form.description.value) {
+					alert('내용을 입력하세요');
+					form.description.focus();
+					return false;
+				}
+				form.submit();
+				return true;
+			}
 			
 	body
-		form(action='/topic' method='post')
-			h1 Server Side JavaScript
-			p
-				input(type='text' name='title' placeholder='제목 입력')
-			p
-				textarea(name='description' placeholder='내용 입력')
-			p
-				input(type='submit' value='전송')
+		div.container
+			h1 
+				Server Side JavaScript
+			div.btn
+				a(href='/topic') List
+			ul
+				each topic in topics
+					li
+						a(href='/topic/'+ topic )= topic
 
+			form(name='myform' action='/topic' method='post')
+				p
+					input(type='text' name='title' placeholder='제목 입력')
+				p
+					textarea(name='description' placeholder='내용 입력')
+				p
+					input(type='submit' value='전송' onclick='return formSubmit();')
