@@ -1,12 +1,27 @@
 var express = require('express');
 var path = require('path');
+var bodyParser = require('body-parser');
 
 var app = express();
 app.locals.pretty = true; // html 소스 표시를 계층구조로 표시하도록 합니다.
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
-
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(bodyParser.json()); // application/json 파싱하기 위해 설정
+app.use(bodyParser.urlencoded({ extended: false })); // application/x-www-form-urlencoded 파싱 설정
+
+app.get('/form', function(req, res){
+	
+	res.render('form');
+});
+
+app.post('/form_receiver', function(req, res) {
+	// res.json(req.body);
+	var title = req.body.title;
+	var description = req.body.description;
+	res.send(title + ', ' + description);
+});
 
 app.get('/topic', function(req, res){
 	// res.json(req.query);	
