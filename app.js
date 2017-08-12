@@ -1,89 +1,64 @@
 var express = require('express');
 var path = require('path');
 var bodyParser = require('body-parser');
+var fs = require('fs'); // 파일 시스템 모듈 불러오기
 
 var app = express();
 app.locals.pretty = true; // html 소스 표시를 계층구조로 표시하도록 합니다.
-app.set('view engine', 'pug');
-app.set('views', path.join(__dirname, 'views'));
-app.use(express.static(path.join(__dirname, 'public')));
+app.set('view engine', 'pug'); // 뷰 템플릿 엔진 설정
+app.set('views', path.join(__dirname, 'views')); // 뷰(Views) 경로를 지정
 
+app.use(express.static(path.join(__dirname, 'public'))); 
 app.use(bodyParser.json()); // application/json 파싱하기 위해 설정
 app.use(bodyParser.urlencoded({ extended: false })); // application/x-www-form-urlencoded 파싱 설정
 
-app.get('/form', function(req, res){
-	
-	res.render('form');
+// 라우팅 설정
+app.get('/topic/new', function(req, res) {
+	res.render('new');
 });
 
-app.post('/form_receiver', function(req, res) {
-	// res.json(req.body);
-	var title = req.body.title;
-	var description = req.body.description;
-	res.send(title + ', ' + description);
-});
-
-app.get('/topic', function(req, res){
-	// res.json(req.query);	
-	var topics = [
-		'Javascript is ...',
-		'NodeJs is ...',
-		'Express is ...'
-	];
-	var output =`
-	<ul>
-		<li><a href="/topic?id=0">JavaScript</a></li>
-		<li><a href="/topic?id=1">Node.js</a></li>
-		<li><a href="/topic?id=2">Express</a></li>
-	</ul>
-	<hr />
-	<h1>${topics[req.query.id]}</h1>`;
-	
-	res.send(output);
-});
-
-app.get('/topic/:id/:mode', function(req, res) {
-	res.json(req.params);
-});
-
-app.get('/template', function(req, res) {
-	res.render('temp', {
-		'title': 'Pug(Jade)',
-		'time':Date()
+app.get('/topic/:id', function(req, res) {
+	var id = req.params.id;
+	fs.readFile('data/'+id, 'utf8', function(err, data) {
+		if(err) {
+			console.error(err);
+			res.status(500).send('Internal Server Error');
+		}
+		fs.readdir('data', function(err, files) {
+			if(err) {
+				console.error(err);
+				res.status(500).send('Internal Server Error');
+			}
+			res.render('view', { topics : files, title: id, description: data });
+		});
 	});
 });
 
-app.get('/', function(req, res){
-	res.send('Hello, Home Page!');
+app.get('/topic', function(req, res) {
+	fs.readdir('data', function(err, files) {
+		if(err) {
+			console.error(err);
+			res.status(500).send('Internal Server Error');
+		}
+		res.render('view', { topics : files });
+	});
 });
 
-app.get('/dynamic', function(req, res){
-	var lis = '';
-	for(var i=0; i < 5; i++) {
-		lis = lis + '<li>coding'+i+'</li>';
-	}
-	var time = Date();
-	var output = `
-	<!DOCTYPE html>
-	<html>
-	<hd><title>Express Web</title></head>
-	<body>
-	<h1>Welcome to Express.</h1>
-	<h2>Hello, Dynamic!</h2>
-	<ul>${lis}<ul>
-	${time}
-	</body>
-	</html>`;
-	res.send(output);
+app.post('/topic', function(req, res) {
+	// res.json(req.body);	
+	var title = req.body.title;
+	var description = req.body.description;
+	fs.writeFile('data/' + title, description, function(err){
+		if(err) {
+			console.error(err);
+			res.status(500).send('Internal Server Error');
+		}
+		//res.send('Success!');
+		res.redirect('/topic/'+title);
+	});
 });
 
-app.get('/route', function(req, res){
-	res.send('Hello Router, <img src="/images/textcloud.jpg" />');	
-});
-
-app.get('/login', function(req, res){
-	res.send('<h1>Login Please!</h1>');
-});
-app.listen(80, function(){
-	console.log('Connected 80 port!!');
+app.set('port', process.env.PORT || 3000); // 포트 번호 설정
+var server = app.listen(app.get('port'), function(){
+	console.log('익스프레스 웹서버 시작 -> Port: ' + server.address().port);
 });

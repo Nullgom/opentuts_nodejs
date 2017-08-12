@@ -1,0 +1,40 @@
+doctype html
+html
+	head
+		meta(charset='utf-8')
+		title 작성폼
+		style(type='text/css').
+			form {
+				display: block;
+				width: 600px;
+				margin:10px auto;
+				padding:10px;
+				background-color:#dfdfdf;
+				border:1px solid gray;
+			}
+			input, textarea {
+				font-size: 16px;
+				width: 580px;
+				padding: 6px;
+				border:1px solid teal;
+			}
+			textarea {
+				height: 200px;
+			}
+			input[type=submit] {
+				width:590px;
+				background-color: #3a8484;
+				color: white;
+				font-weight:bold';
+			}
+			
+	body
+		form(action='/topic' method='post')
+			h1 Server Side JavaScript
+			p
+				input(type='text' name='title' placeholder='제목 입력')
+			p
+				textarea(name='description' placeholder='내용 입력')
+			p
+				input(type='submit' value='전송')
+

@@ -1,0 +1,64 @@
+doctype html
+html
+	head
+		meta(charset='utf-8')
+		title 작성폼
+		style(type='text/css').
+			body { 
+				margin:0; padding:0;
+				background: #dfdfdf;
+				color: #333;
+			}
+			.container {
+				width: 600px;
+				margin: 20px auto;
+				padding: 10px;
+				background: #fff;
+			}
+			.container h1 {
+				text-align:center;
+			}
+			.container ul {
+				list-style:none;
+				border:1px solid #dfdfdf;
+				border-bottom:0;
+				margin:0; padding:0;
+			}
+			.container li {
+				list-style:none;
+			}
+			.container a {
+				display:block;
+				font-size:1.2em;
+				color: teal;
+				text-transform:capitalize;
+				text-decoration:none;
+				padding: 5px 10px 5px 15px;
+				border-bottom:1px solid #dfdfdf;
+			}
+			.container a:hover {
+				background-color: #DFDFDF;
+				font-weight:bold;
+			}
+			.container article {
+				border:1px solid #dfdfdf;
+				margin-top:10px;
+				padding: 0  10px 10px;
+			}
+			.container h2 {
+				text-transform:capitalize;
+				color:#666;
+				margin: 10px 0;
+				padding: 0 10px 10px;
+				border-bottom: 1px solid #dfdfdf;
+			}
+	body
+		div.container
+			h1 Server Side JavaScript
+			ul
+				each topic in topics
+					li
+						a(href='/topic/'+ topic )= topic
+			article
+				h2= title
+				p !{description.replace(/\n/g, '<br/>')}
