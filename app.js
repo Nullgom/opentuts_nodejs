@@ -27,6 +27,10 @@ app.get('/topic', function(req, res){
 	res.send(output);
 });
 
+app.get('/topic/:id/:mode', function(req, res) {
+	res.json(req.params);
+});
+
 app.get('/template', function(req, res) {
 	res.render('temp', {
 		'title': 'Pug(Jade)',
