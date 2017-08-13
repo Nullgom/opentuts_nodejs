@@ -1,0 +1,56 @@
+//- add.pug
+extends partials/base.pug
+
+block content
+	div.row
+		div.col-md-3
+			ul.list-group.topic-list
+				each topic in topics
+					li.list-group-item
+						a(href='/topic/'+ topic.id)= topic.title
+		div.col-md-9
+			article.panel.panel-default
+				div.panel-body
+					form.form-horizontal(name='myForm' action='/topic' method='post')
+						fieldset
+							legend New Topic...
+							div.form-group
+								label.col-lg-2.control-label 제목
+								div.col-lg-9
+									input.form-control(type="text" name="title" placeholder="제목 입력")
+							div.form-group
+								label.col-lg-2.control-label 내용
+								div.col-lg-9
+									textarea.form-control(name="description" placeholder="설명 입력" rows='8')
+							div.form-group
+								label.col-lg-2.control-label 작성자
+								div.col-lg-9
+									input.form-control(type="text" name="author" placeholder="작성자 이름 입력")
+							div.form-group
+								div.col-lg-9.col-lg-offset-2
+									button.btn.btn-default(type="reset") Cancel
+									| &nbsp;&nbsp;
+									button.btn.btn-primary(type="submit" onclick='return formSubmit()') Submit
+block scripts
+	script.
+		function formSubmit() {
+			var form = document.myForm;
+			if(!form.title.value) {
+				alert('제목을 입력하세요.');
+				form.title.focus();
+				return false;
+			}
+			if(!form.description.value) {
+				alert('설명을 입력하세요.');
+				form.description.focus();
+				return false;
+			}
+
+			if(!form.author.value) {
+				alert('작성자 이름을 입력하세요.');
+				form.author.focus();
+				return false;
+			}
+			form.submit();
+			return true;
+		}
