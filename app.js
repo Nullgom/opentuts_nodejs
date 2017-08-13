@@ -42,47 +42,40 @@ app.post('/upload', upload.single('userfile'), function(req, res) {
 });
 
 // 글 쓰기 
-app.get('/topic/add', function(req, res) {
+app.get('/topic/add', function(req, res, next) {
 	var sql = 'SELECT id, title FROM topics';
 	conn.query(sql, function(err, topics, fields) {
-		if(err) {
-			console.log(err);
-			res.status(500).send('Internal Server Error');
-		} else {
-			res.render('add', {topics: topics});	
-		}
+		if(err) return next(err);
+		
+		res.render('add', {topics: topics});	
 	});
 });
 
 // 글 수정 하기
-app.get('/topic/:id/edit', function(req, res) {
+app.get('/topic/:id/edit', function(req, res, next) {
 	var sql = 'SELECT id, title FROM topics';
 	conn.query(sql, function(err, topics, fields) {
-		if(err) {
-			console.log(err);
-			res.status(500).send('Internal Server Error');
-			return;
-		}
+		if(err) return next(err);
+	
 		var id = req.params.id;
 		if(id) {
 			var sql = 'SELECT * FROM topics WHERE id=?';
 			conn.query(sql, [id], function(err, rows, fields) {
 				if(err) {
-					console.log(err);
-					res.status(500).send('Internal Server Error');
+					return next(err);
 				} else {
 					res.render('edit', { topics: topics, topic: rows[0]});	
 				}
 			});
 		}else {
 			console.log('There is no ID');
-			res.status(500).send('Internal Server Error');
+			return next(err);
 		}
 	});
 });
 
 // 업데이트
-app.post('/topic/:id/edit', function(req, res) {
+app.post('/topic/:id/edit', function(req, res, next) {
 	var title = req.body.title;
 	var description = req.body.description;
 	var author = req.body.author;
@@ -90,11 +83,8 @@ app.post('/topic/:id/edit', function(req, res) {
 	var sql = 'UPDATE topics SET title=?, description=?, author=? WHERE id=?';
 	
 	conn.query(sql, [title, description, author, id], function(err, result, fields) {
-		if(err) {
-			console.log(err);
-			res.status(500).send('Internal Server Error');
-			return;
-		}
+		if(err) return next(err);
+
 		if(result.affectedRows) {
 		 	res.redirect('/topic/' + id);
 		} else {
@@ -104,7 +94,7 @@ app.post('/topic/:id/edit', function(req, res) {
 });
 
 // 글 삭제
-app.get('/topic/:id/delete', function(req, res) {
+app.get('/topic/:id/delete', function(req, res, next) {
 	var sql = 'SELECT id, title FROM topics';
 	var id = req.params.id;
 	
@@ -112,13 +102,12 @@ app.get('/topic/:id/delete', function(req, res) {
 		var sql = 'SELECT id, title FROM topics WHERE id=?';
 		conn.query(sql, [id], function(err, topic) {
 			if(err) {
-				console.log(err);
-				res.status(500).send('Internal Server Error');
+				return next(err);
 			} else {
 				console.log(topic);
 				if( topic.length === 0) {
 					console.log('There is no record.');
-					res.status(500).send('Internal Server Error');
+					return next(err);
 				} else {
 					res.render('delete', {topics: topics, topic: topic[0] });	
 				}
@@ -127,27 +116,26 @@ app.get('/topic/:id/delete', function(req, res) {
 	});
 });
 
-app.post('/topic/:id/delete', function(req, res){
+app.post('/topic/:id/delete', function(req, res, next){
 	var id = req.params.id;
 	var sql = 'DELETE FROM topics WHERE id=?';
 	conn.query(sql, [id], function(err, result) {
+		if(err) return next(err);
+		
 		res.redirect('/topic');
 	});
 });
 
 // 글 저장
-app.post('/topic', function(req, res) {
+app.post('/topic', function(req, res, next) {
 	
 	var title = req.body.title;
 	var description = req.body.description;
 	var author = req.body.author;
 	var sql = 'INSERT INTO topics (title, description, author) VALUES (?, ?, ?)';
 	conn.query(sql, [title, description, author], function(err, topic, fields) {
-		if(err) {
-			console.log(err);
-			res.status(500).send('Internal Server Error');
-			return;
-		}
+		if(err) return next(err);
+		
 		console.log(topic);
 		if(topic.insertId) {
 			res.redirect('/topic/' + topic.insertId);
@@ -158,7 +146,7 @@ app.post('/topic', function(req, res) {
 });
 
 // 목록, 내용 보기
-app.get(['/topic', '/topic/:id'], function(req, res) {
+app.get(['/topic', '/topic/:id'], function(req, res, next) {
 	var sql = 'SELECT id, title FROM topics';
 	
 	conn.query(sql, function(err, topics, fields) {
@@ -168,8 +156,7 @@ app.get(['/topic', '/topic/:id'], function(req, res) {
 			var sql = 'SELECT * FROM topics WHERE id=?';
 			conn.query(sql, [id], function(err, rows, fields) {
 				if(err) {
-					console.log(err);
-					res.status(500).send('Internal Server Error');
+					return next(err);
 				} else {
 					res.render('view', { topics: topics, topic: rows[0]});	
 				}
@@ -180,6 +167,27 @@ app.get(['/topic', '/topic/:id'], function(req, res) {
 	});
 });
 
+// 404 캐치 하고 에러핸들러로 포워딩
+app.use(function(req, res, next) {
+	var err = new Error('Not Found');
+	err.status = 404;
+	next(err);
+});
+// 에러 핸들러
+app.use(function(err, req, res, next) {
+	err.status = err.status || 500; // status 지정 되지 않았으면 무조건 500으로 설정
+	if(req.app.get('env') === 'development') {  // 개발 환경일 경우
+		res.locals.message = err.message;	
+		res.locals.error = err;
+		console.error(err);
+	} else {
+		res.locals.message = err.status === 404 ? 'Page Not Found' : 'Internal Server Error';
+		res.locals.error = {};
+	}
+	// 에러 페이지 렌더링
+	res.status(err.status);
+	res.render('error');
+});
 
 app.set('port', process.env.PORT || 3000); // 포트 번호 설정
 var server = app.listen(app.get('port'), function(){
