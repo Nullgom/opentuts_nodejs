@@ -4,6 +4,7 @@ var session = require('express-session');
 var MySQLStore = require('express-mysql-session')(session);
 var bodyParser = require('body-parser');
 var multer = require('multer'); // 파일 업로드 모듈 불러오기
+var md5 = require('md5');
 var _storage = multer.diskStorage({
 	destination: function (req, file, cb) {	
 		cb(null, 'uploads/');
@@ -62,7 +63,7 @@ app.post('/upload', upload.single('userfile'), function(req, res) {
 var users = [ // 임시 데이타
 	{
 		username: 'egoing',
-		password: '112233',
+		password: 'd0970714757783e6cf17b26fb8e2298f',
 		displayName: 'Egoing'
 	}
 ];
@@ -78,7 +79,7 @@ app.get('/auth/login', function(req, res, next) {
 // 로그인 처리
 app.post('/auth/login', function(req, res, next) {
 	var uname = req.body.username;
-	var pwd = req.body.password;
+	var pwd = md5(req.body.password);
 	for(var i = 0; i < users.length; i++) {
 		var user = users[i];
 		if(uname === user.username && pwd === user.password) {
@@ -116,7 +117,7 @@ app.get('/auth/register', function(req, res, next) {
 app.post('/auth/register', function(req, res, next) {
 	var user = {
 		username: req.body.username,
-		password: req.body.password,
+		password: md5(req.body.password),
 		displayName: req.body.displayName
 	};
 	users.push(user);
