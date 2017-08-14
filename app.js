@@ -3,9 +3,11 @@ var path = require('path');
 var session = require('express-session');
 var MySQLStore = require('express-mysql-session')(session);
 var bodyParser = require('body-parser');
-var multer = require('multer'); // 파일 업로드 모듈 불러오기
 var bkfd2Password = require("pbkdf2-password");
 var hasher = bkfd2Password();
+
+var fs = require('fs'); // 파일 시스템 모듈 불러오기
+var multer = require('multer'); // 파일 업로드 모듈 불러오기
 var _storage = multer.diskStorage({
 	destination: function (req, file, cb) {	
 		cb(null, 'uploads/');
@@ -14,9 +16,11 @@ var _storage = multer.diskStorage({
 		cb(null, file.originalname);
 	}
 });
-
 var upload = multer({ storage: _storage });
-var fs = require('fs'); // 파일 시스템 모듈 불러오기
+
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+
 var mysql = require('mysql'); // mysql dababase 모듈
 var dbOption = {
 	host: 'localhost',
@@ -41,10 +45,13 @@ app.use(session({ // 세션 설정 정보
   saveUninitialized: true,
   store: new MySQLStore(dbOption) // 세션을 DB에 저장.
 }));
+app.use(passport.initialize());
+app.use(passport.session());  //세션 미들웨어 뒤에 사용함.
+
 // 로그인 확인을 위한 전역변수 처리
 app.use(function(req, res, next) {
-	if(req.session.displayName)
-		res.locals.whoami = req.session.displayName;
+	if(req.user && req.user.displayName)
+		res.locals.whoami = req.user.displayName;
 	next();
 });
 
@@ -72,37 +79,86 @@ var users = [ // 임시 데이타
 
 // 로그인 폼 화면
 app.get('/auth/login', function(req, res, next) {
-	if(!req.session.displayName) {
+	if(!(req.user && req.user.displayName)) {
 		res.render('login');
 	} else {
 		res.redirect('/topic');
 	}
 });
-// 로그인 처리
-app.post('/auth/login', function(req, res, next) {
-	var uname = req.body.username;
-	var pwd = req.body.password;
+
+passport.serializeUser(function(user, done) {
+	console.log('serializeUser', user);
+	done(null, user.username);
+});
+
+passport.deserializeUser(function(id, done) {
+	console.log('deserializeUser', id);
 	for(var i = 0; i < users.length; i++) {
 		var user = users[i];
-		if(uname === user.username) {
-			return hasher({password: pwd, salt: user.salt}, function(err, pass, salt, hash) {
-				if(hash == user.password) {
-					req.session.displayName = user.displayName;
-					return req.session.save(function(){ // 뭔가 분제가...
-						res.redirect('/topic');
-					});
-				} else {
-					res.redirect('/auth/login');
-				}
-			});
+		if(user.username == id) {
+			done(null, user);
 		}
 	}
-	res.redirect('/auth/login');
 });
+
+passport.use(new LocalStrategy(
+	function(username, password, done) {
+		var uname = username;
+		var pwd = password;
+		for(var i = 0; i < users.length; i++) {
+			var user = users[i];
+			if(uname === user.username) {
+				return hasher({password: pwd, salt: user.salt}, 
+					function(err, pass, salt, hash) {
+						if(hash == user.password) {
+							console.log('LocalStrategy', user);
+							done(null, user);
+						} else {
+							done(null, false);
+						}
+					}
+				);
+			}
+		}
+		done(null, false);
+	}
+));
+// 로그인 처리
+app.post('/auth/login', 
+	passport.authenticate(
+		'local',
+		{
+			successRedirect: '/topic',
+			failureRedirect: '/auth/login',
+			failureFlash: false
+		}
+	)
+);
+
+// app.post('/auth/login', function(req, res, next) {
+// 	var uname = req.body.username;
+// 	var pwd = req.body.password;
+// 	for(var i = 0; i < users.length; i++) {
+// 		var user = users[i];
+// 		if(uname === user.username) {
+// 			return hasher({password: pwd, salt: user.salt}, function(err, pass, salt, hash) {
+// 				if(hash == user.password) {
+// 					req.session.displayName = user.displayName;
+// 					return req.session.save(function(){ // 뭔가 분제가...
+// 						res.redirect('/topic');
+// 					});
+// 				} else {
+// 					res.redirect('/auth/login');
+// 				}
+// 			});
+// 		}
+// 	}
+// 	res.redirect('/auth/login');
+// });
 
 // 로그아웃 처리
 app.get('/auth/logout', function(req, res) {
-	delete req.session.displayName;
+	req.logout();
 	req.session.save(function(){
 		res.redirect('/topic');	
 	});
@@ -133,8 +189,12 @@ app.post('/auth/register', function(req, res, next) {
 			displayName: req.body.displayName
 		};
 		users.push(user);
-		//console.log(user);
-		res.redirect('/auth/login');
+		req.login(user, function(err) {
+			if (err) { return next(err); }
+			req.session.save(function(){
+				res.redirect('/topic');
+			});
+		});
 	});
 	// res.json(users);
 });

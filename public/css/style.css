@@ -35,3 +35,6 @@ article.panel .panel-body {
 	min-height:400px;
 	font-size: 1.2em;
 }
+.list-group-item {
+	padding: 8px 15px;
+}
