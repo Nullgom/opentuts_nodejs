@@ -1,9 +1,12 @@
 var express = require('express');
 var path = require('path');
-var bodyParser = require('body-parser');
 var fs = require('fs'); // 파일 시스템 모듈 불러오기
+var bodyParser = require('body-parser');
+// var session = require('express-session'); // 세션 모듈 불러오기
+// var FileStore = require('session-file-store')(session);
 
 var app = express();
+
 app.locals.pretty = true; // html 소스 표시를 계층구조로 표시하도록 합니다.
 app.set('view engine', 'pug'); // 뷰 템플릿 엔진 설정
 app.set('views', path.join(__dirname, 'views')); // 뷰(Views) 경로를 지정
@@ -11,6 +14,12 @@ app.set('views', path.join(__dirname, 'views')); // 뷰(Views) 경로를 지정
 app.use(express.static(path.join(__dirname, 'public'))); 
 app.use(bodyParser.json()); // application/json 파싱하기 위해 설정
 app.use(bodyParser.urlencoded({ extended: false })); // application/x-www-form-urlencoded 파싱 설정
+// app.use(session({
+// 	secret: 'TheQuickBrownFox@1234567890',
+// 	resave: false,
+// 	saveUninitialized:true,
+// 	store: new FileStore()
+// }));
 
 // 라우팅 설정
 app.get('/topic/new', function(req, res) {
