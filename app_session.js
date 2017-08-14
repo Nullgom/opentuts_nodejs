@@ -1,5 +1,6 @@
 var express = require('express');
 var session = require('express-session');
+var MySQLStore = require('express-mysql-session')(session);
 var bodyParser = require('body-parser');
 
 var app = express();
@@ -8,7 +9,13 @@ app.use(session({
   secret: 'TheQuickBrownFoxJumpsOverLazyDog',
   resave: false,
   saveUninitialized: true,
-  cookie: { maxAge: 60000 }
+  store: new MySQLStore({
+	host: 'localhost',
+	port: 3306,  
+	user: 'nodeuser',
+	password: 'node@pass',
+	database: 'otut2'
+  })
 }));
 
 // 세션을 이용한 카운터
@@ -40,7 +47,9 @@ app.get('/welcome', function(req, res) {
 
 app.get('/auth/logout', function(req, res) {
 	delete req.session.displayName;
-	res.redirect('/welcome');
+	req.session.save(function(){
+		res.redirect('/welcome');	
+	});
 });
 
 app.post('/auth/login', function(req, res) {
@@ -54,7 +63,9 @@ app.post('/auth/login', function(req, res) {
 	
 	if(uname === user.username && pwd === user.password) {
 		req.session.displayName = user.displayName;
-		res.redirect('/welcome');
+		req.session.save(function() {
+			res.redirect('/welcome');	
+		});
 	} else {
 		res.send('Who are you? <a href="/auth/login">Login</a>');
 	}
@@ -74,7 +85,6 @@ app.get('/auth/login', function(req, res) {
 	} else {
 		res.redirect('/welcome');
 	}
-	
 });
 
 app.listen(3000, function () {
