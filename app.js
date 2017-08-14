@@ -4,7 +4,8 @@ var session = require('express-session');
 var MySQLStore = require('express-mysql-session')(session);
 var bodyParser = require('body-parser');
 var multer = require('multer'); // 파일 업로드 모듈 불러오기
-var md5 = require('md5');
+var sha256 = require('sha256');
+var randString = require('randomstring');
 var _storage = multer.diskStorage({
 	destination: function (req, file, cb) {	
 		cb(null, 'uploads/');
@@ -63,9 +64,16 @@ app.post('/upload', upload.single('userfile'), function(req, res) {
 var users = [ // 임시 데이타
 	{
 		username: 'egoing',
-		password: 'd0970714757783e6cf17b26fb8e2298f',
+		password: '4e3906f022fa70dc61b695c4a761956688cb97e724a51ca0aaafc5a97dea59c5',
+		salt:'!@#@!#$aaa',
 		displayName: 'Egoing'
-	}
+	},
+	{
+ 		username:'k8805',
+		password:'0b5699baf59161ae196596d500f5b1531b92916c3f840950a2815b28bdb50eed',
+		salt:'!@#$adsfav#@$',
+		displayName:'K5'
+    }
 ];
 
 // 로그인 폼 화면
@@ -79,10 +87,10 @@ app.get('/auth/login', function(req, res, next) {
 // 로그인 처리
 app.post('/auth/login', function(req, res, next) {
 	var uname = req.body.username;
-	var pwd = md5(req.body.password);
+	var pwd = req.body.password;
 	for(var i = 0; i < users.length; i++) {
 		var user = users[i];
-		if(uname === user.username && pwd === user.password) {
+		if(uname === user.username && sha256(pwd+user.salt) === user.password) {
 			req.session.displayName = user.displayName;
 			return req.session.save(function(){ // 뭔가 분제가...
 				res.redirect('/topic');
@@ -115,9 +123,11 @@ app.get('/auth/register', function(req, res, next) {
 
 // 회원 가입 처리
 app.post('/auth/register', function(req, res, next) {
+	var salt = randString.generate(12);
 	var user = {
 		username: req.body.username,
-		password: md5(req.body.password),
+		password: sha256(req.body.password + salt),
+		salt: salt,
 		displayName: req.body.displayName
 	};
 	users.push(user);
