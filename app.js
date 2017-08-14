@@ -1,5 +1,7 @@
 var express = require('express');
 var path = require('path');
+var session = require('express-session');
+var MySQLStore = require('express-mysql-session')(session);
 var bodyParser = require('body-parser');
 var multer = require('multer'); // 파일 업로드 모듈 불러오기
 var _storage = multer.diskStorage({
@@ -10,15 +12,17 @@ var _storage = multer.diskStorage({
 		cb(null, file.originalname);
 	}
 });
+
 var upload = multer({ storage: _storage });
 var fs = require('fs'); // 파일 시스템 모듈 불러오기
 var mysql = require('mysql'); // mysql dababase 모듈
-var conn = mysql.createConnection({
+var dbOption = {
 	host: 'localhost',
 	user: 'nodeuser',
 	password: 'node@pass',
 	database: 'otut2'
-});
+};
+var conn = mysql.createConnection(dbOption);
 
 conn.connect();
 var app = express();
@@ -29,6 +33,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/user', express.static(path.join(__dirname, 'uploads'))); 
 app.use(bodyParser.json()); // application/json 파싱하기 위해 설정
 app.use(bodyParser.urlencoded({ extended: false })); // application/x-www-form-urlencoded 파싱 설정
+app.use(session({ // 세션 설정 정보
+  secret: 'TheQuickBrownFoxJumpsOverLazyDog',
+  resave: false,
+  saveUninitialized: true,
+  store: new MySQLStore(dbOption) // 세션을 DB에 저장.
+}));
+// 로그인 확인을 위한 전역변수 처리
+app.use(function(req, res, next) {
+	if(req.session.displayName)
+		res.locals.whoami = req.session.displayName;
+	next();
+});
 
 // 라우팅 설정 -----------------------------------------\
 app.get('/upload', function(req, res) {
@@ -36,11 +52,81 @@ app.get('/upload', function(req, res) {
 });
 
 app.post('/upload', upload.single('userfile'), function(req, res) {
-	
 	console.log(req.file);
 	res.send('Uploaded');
 });
 
+/*========================================================*
+ * 사용자 계정 관련 : 로그인, 회원가입
+ *========================================================*/
+var users = [ // 임시 데이타
+	{
+		username: 'egoing',
+		password: '112233',
+		displayName: 'Egoing'
+	}
+];
+
+// 로그인 폼 화면
+app.get('/auth/login', function(req, res, next) {
+	if(!req.session.displayName) {
+		res.render('login');
+	} else {
+		res.redirect('/topic');
+	}
+});
+// 로그인 처리
+app.post('/auth/login', function(req, res, next) {
+	var uname = req.body.username;
+	var pwd = req.body.password;
+	for(var i = 0; i < users.length; i++) {
+		var user = users[i];
+		if(uname === user.username && pwd === user.password) {
+			req.session.displayName = user.displayName;
+			return req.session.save(function(){ // 뭔가 분제가...
+				res.redirect('/topic');
+			});
+		}
+	}
+	res.redirect('/auth/login');
+});
+
+// 로그아웃 처리
+app.get('/auth/logout', function(req, res) {
+	delete req.session.displayName;
+	req.session.save(function(){
+		res.redirect('/topic');	
+	});
+});
+
+// 회원 가입 폼 화면
+app.get('/auth/register', function(req, res, next) {
+	if(!req.session.displayName) {
+		res.render('register');
+	} else {
+		res.send(`
+			<h2>${req.session.displayName}님은 이미 로그인 상태입니다.</h2>
+			<p><a href="/topic">Home</a>&nbsp;&nbsp;
+				<a href="/auth/logout">로그아웃</a></p>
+		`);
+	}
+});
+
+// 회원 가입 처리
+app.post('/auth/register', function(req, res, next) {
+	var user = {
+		username: req.body.username,
+		password: req.body.password,
+		displayName: req.body.displayName
+	};
+	users.push(user);
+	// res.json(users);
+	res.redirect('/auth/login');
+});
+
+/*========================================================*
+ * TOPIC
+ *========================================================*/
 // 글 쓰기 
 app.get('/topic/add', function(req, res, next) {
 	var sql = 'SELECT id, title FROM topics';

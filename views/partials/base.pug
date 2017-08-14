@@ -19,19 +19,31 @@ html(lang=ko)
 				div.collapse.navbar-collapse#bs3-navbar
 					ul.nav.navbar-nav
 						li.active
-							a(href="/topic") 토픽1
+							a(href="/topic") Topics
 						li
 							a(href="#") 메뉴2
 						li
 							a(href="#") 메뉴3
 					ul.nav.navbar-nav.navbar-right
-						li
-							a(href="/login") 로그인
-						li
-							a(href="/signup") 회원가입
+						if whoami
+							li
+								a(href="/auth/profile")
+									span.glyphicon.glyphicon-user
+									| &nbsp; #{whoami} 님
+							li
+								a(href="/auth/logout")
+									span.glyphicon.glyphicon-log-out
+									|  &nbsp; 로그아웃
+						else
+							li
+								a(href="/auth/login") 
+									span.glyphicon.glyphicon-log-in
+									|  &nbsp; 로그인
+							li
+								a(href="/auth/register")
+									span.glyphicon.glyphicon-check
+									|  &nbsp; 회원가입
 		div.container
-			div.page-header
-				h1 Server Side JavaScript
 			block content
 		block foot
 			footer#footer

@@ -2,6 +2,8 @@
 extends partials/base.pug
 
 block content
+	div.page-header
+		h1 Server Side JavaScript
 	div.row
 		div.col-md-3
 			ul.list-group.topic-list
@@ -17,7 +19,10 @@ block content
 						div !{topic.description.replace(/\n/g,'<br />')}
 						div.text-muted= 'by ' + topic.author
 					else
-						h3 Welcome to Home Page!
+						if whoami
+							h3= 'Welcome! Hello, ' + whoami
+						else
+							h3 Welcome to My Page!
 						hr
 						| This is server side JavaScript tutorials.
 						br
@@ -31,5 +36,5 @@ block content
 						a.btn.btn-warning(href='/topic/'+topic.id+'/edit') Edit
 						| &nbsp;&nbsp;&nbsp;
 						a.btn.btn-danger(href='/topic/'+topic.id+'/delete') Delete
-	block scripts
+block scripts
 	
