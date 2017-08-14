@@ -4,8 +4,8 @@ var session = require('express-session');
 var MySQLStore = require('express-mysql-session')(session);
 var bodyParser = require('body-parser');
 var multer = require('multer'); // 파일 업로드 모듈 불러오기
-var sha256 = require('sha256');
-var randString = require('randomstring');
+var bkfd2Password = require("pbkdf2-password");
+var hasher = bkfd2Password();
 var _storage = multer.diskStorage({
 	destination: function (req, file, cb) {	
 		cb(null, 'uploads/');
@@ -64,16 +64,10 @@ app.post('/upload', upload.single('userfile'), function(req, res) {
 var users = [ // 임시 데이타
 	{
 		username: 'egoing',
-		password: '4e3906f022fa70dc61b695c4a761956688cb97e724a51ca0aaafc5a97dea59c5',
-		salt:'!@#@!#$aaa',
+		password: 'mTi+/qIi9s5ZFRPDxJLY8yAhlLnWTgYZNXfXlQ32e1u/hZePhlq41NkRfffEV+T92TGTlfxEitFZ98QhzofzFHLneWMWiEekxHD1qMrTH1CWY01NbngaAfgfveJPRivhLxLD1iJajwGmYAXhr69VrN2CWkVD+aS1wKbZd94bcaE=',
+ 		salt:'O0iC9xqMBUVl3BdO50+JWkpvVcA5g2VNaYTR5Hc45g+/iXy4PzcCI7GJN5h5r3aLxIhgMN8HSh0DhyqwAp8lLw==',
 		displayName: 'Egoing'
-	},
-	{
- 		username:'k8805',
-		password:'0b5699baf59161ae196596d500f5b1531b92916c3f840950a2815b28bdb50eed',
-		salt:'!@#$adsfav#@$',
-		displayName:'K5'
-    }
+	}
 ];
 
 // 로그인 폼 화면
@@ -90,10 +84,16 @@ app.post('/auth/login', function(req, res, next) {
 	var pwd = req.body.password;
 	for(var i = 0; i < users.length; i++) {
 		var user = users[i];
-		if(uname === user.username && sha256(pwd+user.salt) === user.password) {
-			req.session.displayName = user.displayName;
-			return req.session.save(function(){ // 뭔가 분제가...
-				res.redirect('/topic');
+		if(uname === user.username) {
+			return hasher({password: pwd, salt: user.salt}, function(err, pass, salt, hash) {
+				if(hash == user.password) {
+					req.session.displayName = user.displayName;
+					return req.session.save(function(){ // 뭔가 분제가...
+						res.redirect('/topic');
+					});
+				} else {
+					res.redirect('/auth/login');
+				}
 			});
 		}
 	}
@@ -123,16 +123,20 @@ app.get('/auth/register', function(req, res, next) {
 
 // 회원 가입 처리
 app.post('/auth/register', function(req, res, next) {
-	var salt = randString.generate(12);
-	var user = {
-		username: req.body.username,
-		password: sha256(req.body.password + salt),
-		salt: salt,
-		displayName: req.body.displayName
-	};
-	users.push(user);
+	// var salt = randString.generate(12);
+	hasher({password: req.body.password}, function(err, pass, salt, hash){
+		if(err) return next(err);
+		var user = {
+			username: req.body.username,
+			password: hash,
+			salt: salt,
+			displayName: req.body.displayName
+		};
+		users.push(user);
+		//console.log(user);
+		res.redirect('/auth/login');
+	});
 	// res.json(users);
-	res.redirect('/auth/login');
 });
 
 /*========================================================*
