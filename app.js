@@ -90,41 +90,41 @@ app.get('/auth/login', function(req, res, next) {
 });
 
 passport.serializeUser(function(user, done) {
-	console.log('serializeUser', user);
+	// console.log('serializeUser', user);
 	done(null, user.authId);
 });
 
 passport.deserializeUser(function(id, done) {
-	console.log('deserializeUser', id);
-	for(var i = 0; i < users.length; i++) {
-		var user = users[i];
-		if(user.authId === id) {
-			done(null, user);
+	// console.log('deserializeUser', id);
+	var sql = 'SELECT * FROM users WHERE authId=?';
+	conn.query(sql, [id], function(err, results){
+		if(err) {
+			done('There is no user.');
+		} else {
+			done(null, results[0]);
 		}
-	}
-	done('There is no user');
+	});
 });
 
 passport.use(new LocalStrategy(
 	function(username, password, done) {
 		var uname = username;
 		var pwd = password;
-		for(var i = 0; i < users.length; i++) {
-			var user = users[i];
-			if(uname === user.username) {
-				return hasher({password: pwd, salt: user.salt}, 
-					function(err, pass, salt, hash) {
-						if(hash == user.password) {
-							console.log('LocalStrategy', user);
-							done(null, user);
-						} else {
-							done(null, false);
-						}
+		var sql = 'SELECT * FROM users WHERE authId=?';
+		conn.query(sql, ['local:'+uname], function(err, results){
+			if(err) return done(err, null);
+			var user = results[0];
+			return hasher({password: pwd, salt: user.salt}, 
+				function(err, pass, salt, hash) {
+					if(hash == user.password) {
+						//console.log('LocalStrategy', user);
+						done(null, user);
+					} else {
+						done(null, false);
 					}
-				);
-			}
-		}
-		done(null, false);
+				}
+			);
+		});
 	}
 ));
 
@@ -135,21 +135,29 @@ passport.use(new FacebookStrategy({
 		profileFields:['id', 'email', 'gender', 'link', 'locale', 'name', 'timezone', 'updated_time', 'verified', 'displayName']
 	},
 	function(accessToken, refreshToken, profile, done) {
-		console.log(profile);
+		// console.log(profile);
 		var authId = 'facebook:' + profile.id;
-		for(var i=0; i < users.length; i++) {
-			var user = users[i];
-			if(user.authId === authId) {
-				return done(null, user);
+		var sql = 'SELECT * FROM users WHERE authId=?';
+		conn.query(sql, [authId], function(err, results) {
+			if(err) return done(err);
+			if(results) {
+				done(null, results[0]);
+			} else {
+				var newuser = {
+					'authId': authId,
+					'displayName': profile.displayName,
+					'email': profile.emails[0].value
+				};
+				var sql = 'INSERT INTO users SET ?';
+				conn.query(sql, newuser, function(err, results) {
+					if(err) {
+						return done(err);
+					} else {
+						return done(null, results[0]);
+					}
+				});
 			}
-		}
-		var newuser = {
-			'authId': authId,
-			'displayName': profile.displayName,
-			'email': profile.emails[0].value
-		};
-		users.push(newuser);
-		done(null, newuser);
+		});
 	}
 ));
 
@@ -215,15 +223,16 @@ app.post('/auth/register', function(req, res, next) {
 			salt: salt,
 			displayName: req.body.displayName
 		};
-		users.push(user);
-		req.login(user, function(err) {
-			if (err) { return next(err); }
-			req.session.save(function(){
-				res.redirect('/topic');
+		var sql = 'INSERT INTO users SET ?';
+		conn.query(sql, user, function(err, results) {
+			if(err) { return next(err);}
+			req.login(user, function(err){
+				req.session.save(function() {
+					res.redirect('/topic');	
+				});	
 			});
 		});
 	});
-	// res.json(users);
 });
 
 /*========================================================*
