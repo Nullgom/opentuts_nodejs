@@ -22,15 +22,10 @@ var upload = multer({ storage: _storage });
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
-
+// 데이터베이스 설정 블러오기
+var config = require('./config/config.js'); // 테이터베이스 설정을 모듈로 따로 분리함.
 var mysql = require('mysql'); // mysql dababase 모듈
-var dbOption = {
-	host: 'localhost',
-	user: 'nodeuser',
-	password: 'node@pass',
-	database: 'otut2'
-};
-var conn = mysql.createConnection(dbOption);
+var conn = mysql.createConnection(config.dbOption);
 
 conn.connect();
 var app = express();
@@ -42,10 +37,10 @@ app.use('/user', express.static(path.join(__dirname, 'uploads')));
 app.use(bodyParser.json()); // application/json 파싱하기 위해 설정
 app.use(bodyParser.urlencoded({ extended: false })); // application/x-www-form-urlencoded 파싱 설정
 app.use(session({ // 세션 설정 정보
-  secret: 'TheQuickBrownFoxJumpsOverLazyDog',
-  resave: false,
-  saveUninitialized: true,
-  store: new MySQLStore(dbOption) // 세션을 DB에 저장.
+	secret: 'TheQuickBrownFoxJumpsOverLazyDog',
+	resave: false,
+	saveUninitialized: true,
+	store: new MySQLStore(config.dbOption) // 세션을 DB에 저장.
 }));
 app.use(passport.initialize());
 app.use(passport.session());  //세션 미들웨어 뒤에 사용함.
