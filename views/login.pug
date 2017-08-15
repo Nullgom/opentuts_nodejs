@@ -28,6 +28,10 @@ block content
 						button.btn.btn-primary.btn-block.btn-lg(type='submit' onclick='return formLogin()')
 							i.glyphicon.glyphicon-log-in
 							| &nbsp;&nbsp; Login
+						br
+						a.btn.btn-info.btn-block.btn-lg(href='/auth/facebook')
+							i.fa.fa-facebook(aria-hidden='true')
+							| &nbsp;&nbsp; Facebook Login
 block scripts
 	script.
 		function formLogin() {

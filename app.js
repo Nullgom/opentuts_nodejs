@@ -18,8 +18,10 @@ var _storage = multer.diskStorage({
 });
 var upload = multer({ storage: _storage });
 
+// 사용자 인증  모듈 불러오기
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
+var FacebookStrategy = require('passport-facebook').Strategy;
 
 var mysql = require('mysql'); // mysql dababase 모듈
 var dbOption = {
@@ -70,6 +72,7 @@ app.post('/upload', upload.single('userfile'), function(req, res) {
  *========================================================*/
 var users = [ // 임시 데이타
 	{
+		authId: 'local:egoing',
 		username: 'egoing',
 		password: 'mTi+/qIi9s5ZFRPDxJLY8yAhlLnWTgYZNXfXlQ32e1u/hZePhlq41NkRfffEV+T92TGTlfxEitFZ98QhzofzFHLneWMWiEekxHD1qMrTH1CWY01NbngaAfgfveJPRivhLxLD1iJajwGmYAXhr69VrN2CWkVD+aS1wKbZd94bcaE=',
  		salt:'O0iC9xqMBUVl3BdO50+JWkpvVcA5g2VNaYTR5Hc45g+/iXy4PzcCI7GJN5h5r3aLxIhgMN8HSh0DhyqwAp8lLw==',
@@ -88,17 +91,18 @@ app.get('/auth/login', function(req, res, next) {
 
 passport.serializeUser(function(user, done) {
 	console.log('serializeUser', user);
-	done(null, user.username);
+	done(null, user.authId);
 });
 
 passport.deserializeUser(function(id, done) {
 	console.log('deserializeUser', id);
 	for(var i = 0; i < users.length; i++) {
 		var user = users[i];
-		if(user.username == id) {
+		if(user.authId === id) {
 			done(null, user);
 		}
 	}
+	done('There is no user');
 });
 
 passport.use(new LocalStrategy(
@@ -123,6 +127,32 @@ passport.use(new LocalStrategy(
 		done(null, false);
 	}
 ));
+
+passport.use(new FacebookStrategy({
+		clientID: '1970705606496360',
+		clientSecret: '4dbaca3224b79ca6e6be07d82a48621b',
+		callbackURL: '/auth/facebook/callback',
+		profileFields:['id', 'email', 'gender', 'link', 'locale', 'name', 'timezone', 'updated_time', 'verified', 'displayName']
+	},
+	function(accessToken, refreshToken, profile, done) {
+		console.log(profile);
+		var authId = 'facebook:' + profile.id;
+		for(var i=0; i < users.length; i++) {
+			var user = users[i];
+			if(user.authId === authId) {
+				return done(null, user);
+			}
+		}
+		var newuser = {
+			'authId': authId,
+			'displayName': profile.displayName,
+			'email': profile.emails[0].value
+		};
+		users.push(newuser);
+		done(null, newuser);
+	}
+));
+
 // 로그인 처리
 app.post('/auth/login', 
 	passport.authenticate(
@@ -135,26 +165,22 @@ app.post('/auth/login',
 	)
 );
 
-// app.post('/auth/login', function(req, res, next) {
-// 	var uname = req.body.username;
-// 	var pwd = req.body.password;
-// 	for(var i = 0; i < users.length; i++) {
-// 		var user = users[i];
-// 		if(uname === user.username) {
-// 			return hasher({password: pwd, salt: user.salt}, function(err, pass, salt, hash) {
-// 				if(hash == user.password) {
-// 					req.session.displayName = user.displayName;
-// 					return req.session.save(function(){ // 뭔가 분제가...
-// 						res.redirect('/topic');
-// 					});
-// 				} else {
-// 					res.redirect('/auth/login');
-// 				}
-// 			});
-// 		}
-// 	}
-// 	res.redirect('/auth/login');
-// });
+app.get('/auth/facebook',
+	passport.authenticate(
+		'facebook',
+		{ scope: 'email'}
+	)
+);
+
+app.get('/auth/facebook/callback', 
+	passport.authenticate( 
+		'facebook', 
+		{ 
+			successRedirect: '/topic',
+			failureRedirect: '/auth/login' 
+		}
+	)
+);
 
 // 로그아웃 처리
 app.get('/auth/logout', function(req, res) {
@@ -183,6 +209,7 @@ app.post('/auth/register', function(req, res, next) {
 	hasher({password: req.body.password}, function(err, pass, salt, hash){
 		if(err) return next(err);
 		var user = {
+			authId: 'local:' + req.body.username,
 			username: req.body.username,
 			password: hash,
 			salt: salt,
@@ -214,10 +241,11 @@ app.get('/topic/add', function(req, res, next) {
 
 // 글 수정 하기
 app.get('/topic/:id/edit', function(req, res, next) {
+	//console.log(req.path);
 	var sql = 'SELECT id, title FROM topics';
 	conn.query(sql, function(err, topics, fields) {
 		if(err) return next(err);
-	
+		
 		var id = req.params.id;
 		if(id) {
 			var sql = 'SELECT * FROM topics WHERE id=?';
@@ -309,10 +337,11 @@ app.post('/topic', function(req, res, next) {
 // 목록, 내용 보기
 app.get(['/topic', '/topic/:id'], function(req, res, next) {
 	var sql = 'SELECT id, title FROM topics';
-	
+	var id = req.params.id;
 	conn.query(sql, function(err, topics, fields) {
 		//res.json(rows);
-		var id = req.params.id;
+		//console.log( 'ID: ', req.params.id);
+		
 		if(id) { // id 값이 있는 경우 /topic/:id
 			var sql = 'SELECT * FROM topics WHERE id=?';
 			conn.query(sql, [id], function(err, rows, fields) {
