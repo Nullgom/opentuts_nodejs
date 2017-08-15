@@ -9,7 +9,9 @@ block content
 			article.panel.panel-default
 				div.panel-body
 					div.text-center
-						h2 Register
+						h2 
+							i.fa.fa-user-plus
+							| &nbsp; Register
 					hr
 					form(name="signinForm" action="/auth/register" method="POST")
 						div.form-group
@@ -17,42 +19,27 @@ block content
 							div.input-group
 								span.input-group-addon#basic-addon1
 									i.glyphicon.glyphicon-user
-								input.form-control#uname(type='text' name='username' placeholder='아이디' aria-describeby='basic-addon1')
+								input.form-control#uname(type='text' name='username' placeholder='아이디' aria-describeby='basic-addon1' required='required')
 						div.form-group
 							label(for="pwd") Password
 							div.input-group
 								span.input-group-addon#basic-addon2
 									i.glyphicon.glyphicon-lock
-								input.form-control#pwd(type='password' name='password' placeholder='비밀번호' aria-describeby='basic-addon2')
+								input.form-control#pwd(type='password' name='password' placeholder='비밀번호' aria-describeby='basic-addon2' required='required')
 						div.form-group
 							label(for="dname") Display Name
 							div.input-group
 								span.input-group-addon#basic-addon3
 									i.glyphicon.glyphicon-eye-open
-								input.form-control#dname(type='text' name='displayName' placeholder='이름' aria-describeby='basic-addon3')
+								input.form-control#dname(type='text' name='displayName' placeholder='이름' aria-describeby='basic-addon3' required='required')
+						div.form-group
+							label(for="email") Email
+							div.input-group
+								span.input-group-addon#basic-addon3
+									i.fa.fa-envelope
+								input.form-control#email(type='email' name='email' placeholder='메일 주소' aria-describeby='basic-addon3' required='required')
 						br
-						button.btn.btn-primary.btn-block.btn-lg(type='submit' onclick='return formSignin()')
+						button.btn.btn-primary.btn-block.btn-lg(type='submit')
 							i.glyphicon.glyphicon-check
 							| &nbsp;&nbsp; Singin
-block scripts
-	script.
-		function formSignin() {
-			var form = document.signinForm;
-			if(!form.username.value) {
-				alert('사용자 아이디를 입력하세요.');
-				form.username.focus();
-				return false;
-			}
-			if(!form.password.value) {
-				alert('사용자 비밀번호를 입력하세요.');
-				form.password.focus();
-				return false;
-			}
-			if(!form.displayName.value) {
-				alert('사용자 이름을 입력하세요.');
-				form.displayName.focus();
-				return false;
-			}
-			form.submit();
-			return true;	
-		}
+		

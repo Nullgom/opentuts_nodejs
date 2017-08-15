@@ -9,20 +9,22 @@ block content
 			article.panel.panel-default
 				div.panel-body
 					div.text-center
-						h2 Login
+						h2 
+							i.fa.fa-lock
+							| &nbsp; Login
 					hr
 					form(name="loginForm" action="/auth/login" method="POST")
 						div.form-group
 							label(for="uname") User Name
 							div.input-group
 								span.input-group-addon#basic-addon1
-									i.glyphicon.glyphicon-user
+									i.fa.fa-user
 								input.form-control#uname(type='text' name='username' placeholder='아이디' aria-describeby='basic-addon1')
 						div.form-group
 							label(for="pwd") Password
 							div.input-group
 								span.input-group-addon#basic-addon2
-									i.glyphicon.glyphicon-lock
+									i.fa.fa-key
 								input.form-control#pwd(type='password' name='password' placeholder='비밀번호' aria-describeby='basic-addon2')
 						br
 						button.btn.btn-primary.btn-block.btn-lg(type='submit' onclick='return formLogin()')
