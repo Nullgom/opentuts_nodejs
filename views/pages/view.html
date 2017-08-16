@@ -1,0 +1,81 @@
+{% extends 'layout.html' %}
+{% block title %}{% endblock %}
+{% block content %}
+	{% include '../partials/nav.html' %}
+	<div class="container">
+		<div class="page-header clearfix">
+			<h1 class="pull-left">{{ title }}</h1>
+			<div class="top-btns pull-right">
+				<a href="#" class="btn btn-info btn-lg" data-toggle="modal" data-target="#addTopic">
+					<i class="fa fa-plus"></i>&nbsp; 새 글
+				</a>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-3">
+				<ul class="list-group topic-list">
+					{% for topic in topics %}
+					<li class="list-group-item">
+						<a href="/topic/{{ topic.id }}">{{ topic.title }}</a>
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+			<div class="col-md-9">
+				{% if topic %}
+				<section class="panel panel-default">
+					<div class="panel-body">
+						<h3>{{ topic.title }}</h3>
+						<hr>
+						<div>{{ topic.description }}</div>
+						<p class="text-muted">by {{ topic.author }}</p>
+					</div>	
+				</section>
+				{% else %}
+					<section class="jumbotron text-center">
+						<h3 class="jumbotron-heading">Welcome to {{ title }}</h3>
+						<p class="text-lead text-muted">
+							{% if whoami %}
+								안녕하세요!, {{ whoami }} 님
+							{% else %}
+								반나서 반갑습니다!
+							{% endif %}
+						</p>
+						<a href="/topic" class="btn btn-info">토픽</a>
+					</section>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="addTopic" tabindex="-1" role="dialog" aria-labelledy="myModalLabel" aria-hidden="ture">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<form action="/topics" method="POST">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h4 class="modal-title">새 토픽 작성..</h4>
+				</div>
+				<div class="modal-body">
+					<fieldset class="form-group">
+						<label for="iTitle">Title</label>
+						<input type="text" id="iTitle" name="title" class="form-control" placeholder="제목 입력" required="" />
+					</fieldset>
+					<fieldset class="form-group">
+						<label for="iDesc">Description</label>
+						<textarea id="iDesc" name="description" rows="8" cols="40" class="form-control" placeholder="내용 입력" 
+								  required=""></textarea>
+					</fieldset>
+					<fieldset class="form-group">
+						<label for="iAuthor">작성자</label>
+						<input type="text" id="iAuthor" name="author2" class="form-control" placeholder="작성자 입력" required="" />
+					</fieldset>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">닫기</button>
+					<button type="button" class="btn btn-primary">저장</button>
+				</div>
+				</form>	
+			</div>
+		</div>
+	</div>
+{% endblock %}

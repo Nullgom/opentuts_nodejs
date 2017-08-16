@@ -1,86 +1,147 @@
-// 사용자 인증  모듈 불러오기
-module.exports = function(app) {
-	var conn = require('./db')();
-	var bkfd2Password = require("pbkdf2-password");
-	var hasher = bkfd2Password();
-	var passport = require('passport');
-	var LocalStrategy = require('passport-local').Strategy;
-	var FacebookStrategy = require('passport-facebook').Strategy;
+var bkfd2Password = require("pbkdf2-password");
+var hasher = bkfd2Password();
+var LocalStrategy = require('passport-local').Strategy;
+var FacebookStrategy = require('passport-facebook').Strategy;
+var GoogleStartegy = require('passport-google-oauth20').Strategy;
+var config = require('./config');
+var models = require('../models/index');
+var User = require('../models/user');
 
-	app.use(passport.initialize());
-	app.use(passport.session());  //세션 미들웨어 뒤에 사용함.
+// 사용자 인증  모듈 불러오기
+module.exports = function(passport) {
 	
 	passport.serializeUser(function(user, done) {
-		// console.log('serializeUser', user);
 		done(null, user.authId);
 	});
 
 	passport.deserializeUser(function(id, done) {
-		// console.log('deserializeUser', id);
-		var sql = 'SELECT * FROM users WHERE authId=?';
-		conn.query(sql, [id], function(err, results){
-			if(err) {
-				done('There is no user.');
-			} else {
-				done(null, results[0]);
-			}
+		models.User.find({
+			where: {authId: id}
+		}).then(function(user) {
+			done(null, user);
+		}).catch(function(err){
+			done(err);
 		});
 	});
 
-	passport.use(new LocalStrategy(
-		function(username, password, done) {
-			var uname = username;
-			var pwd = password;
-			var sql = 'SELECT * FROM users WHERE authId=?';
-			conn.query(sql, ['local:'+uname], function(err, results){
-				if(err) return done(err, null);
-				var user = results[0];
-				return hasher({password: pwd, salt: user.salt}, 
-					function(err, pass, salt, hash) {
-						if(hash == user.password) {
-							//console.log('LocalStrategy', user);
-							done(null, user);
-						} else {
-							done(null, false);
-						}
-					}
-				);
-			});
-		}
-	));
-
-	passport.use(new FacebookStrategy({
-			clientID: '1970705606496360',
-			clientSecret: '4dbaca3224b79ca6e6be07d82a48621b',
-			callbackURL: '/auth/facebook/callback',
-			profileFields:['id', 'email', 'gender', 'link', 'locale', 'name', 'timezone', 'updated_time', 'verified', 'displayName']
+	passport.use('local-login', new LocalStrategy({
+			usernameField: 'username',
+        	passwordField: 'password',
+			passReqToCallback: true
 		},
-		function(accessToken, refreshToken, profile, done) {
-			// console.log(profile);
-			var authId = 'facebook:' + profile.id;
-			var sql = 'SELECT * FROM users WHERE authId=?';
-			conn.query(sql, [authId], function(err, results) {
-				if(err) return done(err);
-				if(results) {
-					done(null, results[0]);
-				} else {
-					var newuser = {
-						'authId': authId,
-						'displayName': profile.displayName,
-						'email': profile.emails[0].value
-					};
-					var sql = 'INSERT INTO users SET ?';
-					conn.query(sql, newuser, function(err, results) {
-						if(err) {
-							return done(err);
+		function(req, username, password, done) {
+			models.User.find({
+				where: { authId: 'local:' + username }
+			}).then(function(user){
+				if(!user) {
+					return done(null, false, req.flash('loginMessage', '사용자가 없습니다.'));
+				}
+				return hasher({
+						password: password, salt: user.salt
+					}, function(err, pass, salt, hash) {
+						if(hash === user.password) {
+							//req.session.displayName = user.displayName;
+							return done(null, user);
 						} else {
-							return done(null, results[0]);
+							return done(null, false, req.flash('loginMessage', '비밀번호가 일치하지 않습니다.'));
 						}
 					});
-				}
+			}).catch(function(err){
+				return done(err);
 			});
 		}
 	));
 	
+	passport.use('local-register', new LocalStrategy({
+			usernameField: 'username',
+        	passwordField: 'password',
+			passReqToCallback: true
+		},
+		function(req, username, password, done) {
+			process.nextTick(function() {
+				if(!req.user) {
+					models.User.find({
+						where: { authId: 'local:' + username }
+					}).then(function(user) {
+						if(user) {
+							return done(null, false, req.flash('signupMessage', '이미 사용하고 있는 사용자 이름입니다.'));
+						} else {
+							return hasher({password: password},
+								function(err, pass, salt, hash){
+									models.User.create({
+										authId: 'local:' + req.body.username,
+										username: req.body.username,
+										salt: salt,
+										password: hash,
+										email: req.body.email,
+										displayName: req.body.displayName
+									}).then(function(newUser) {
+										// req.session.displayName = newuser.displayName;
+										return done(null, newUser);
+									}).catch(function(err){
+										return done(err);
+									});
+								}
+							);
+						}
+					}).catch(function(err) { return done(err); });
+				} else {
+					// req.session.displayName = req.user.displayName;
+					return done(null, req.user);
+				}
+			});
+		}
+	));
+
+	passport.use(new FacebookStrategy( config.facebook,
+		function(accessToken, refreshToken, profile, done) {
+			// console.log(profile);
+			process.nextTick(function() {
+				models.User.find({
+					where: { authId: 'facebook:' + profile.id }
+				}).then(function(user){
+					console.log('페이스북 전략');
+					console.log(user);
+					if(user) {
+						return done(null, user);
+					} else {
+						return 	models.User.create({
+							'authId': 'facebook:' + profile.id,
+							'displayName': profile.displayName,
+							'email': profile.emails[0].value	
+						}).then(function(newUser){
+							console.log('페이스북 인증 ------');
+							console.log(newUser);
+							return done(null, newUser); 
+						}).catch(function(err){ return done(err); });
+					}
+				}).catch(function(err){ return done(err); });
+			});
+			
+		}
+	));
+	
+	passport.use(new GoogleStartegy( config.google,
+		function(accessToken, refreshToken, profile, done) {
+			console.log('구글 인증 --------');
+			// console.log(profile);
+			process.nextTick(function() {
+				models.User.find({
+					where: {authId: 'google:' + profile.id }
+				}).then(function(user){
+					if(user) return done(null, user);
+					return models.User.create({
+						'authId': 'facebook:' + profile.id,
+						'displayName': profile.displayName,
+						'email': profile.emails[0].value	
+					}).then(function(newUser){
+						//console.log('구글 인증 --------');
+						//console.log(newUser);
+						return done(null, newUser); 
+					}).catch(function(err) {return done(err); });
+				}).catch(function(err) {return done(err); });
+			});
+		}
+	));	
 	return passport;
 };

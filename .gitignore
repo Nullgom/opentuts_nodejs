@@ -14,3 +14,4 @@ build/Release
 .grunt
 data/*
 uploads/*
+config/config.js

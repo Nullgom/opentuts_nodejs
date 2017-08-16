@@ -9,14 +9,14 @@ module.exports = {
 		database: 'otut2'
 	},
 	facebook : {
-		clientID: '1352044121559690',
-		clientSecret: 'ce1b62c30898587a11c31c055bf2dad3',
+		clientID: '1111111111',
+		clientSecret: 'assdsasadasffdsf',
 		callbackURL: '/auth/facebook/callback',
 		profileFields:['id', 'email', 'gender', 'link', 'locale', 'name', 'timezone', 'updated_time', 'verified', 'displayName']
 	},
 	google : {
-		clientID: '354176592509-fi6ava9ptiin0pbpttt7kem9ckdl6drb.apps.googleusercontent.com',
-		clientSecret: 's59LiCVNb82JNlFlxmR4aXCe',
+		clientID: 'sdfsdfdsfsdfwerw352345235235.apps.googleusercontent.com',
+		clientSecret: '78saf687s6dfyasdfgyas89f7sd879',
 		callbackURL: '/auth/google/callback'
 	}
 };

@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root",
+    "password": "wamp@admin",
+    "database": "otut2_app",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": "wamp@admin",
+    "database": "otut2_test",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": "wamp@admin",
+    "database": "otut2_product",
+    "host": "localhost",
+    "dialect": "mysql"
+  }
+}

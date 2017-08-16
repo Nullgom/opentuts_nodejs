@@ -1,0 +1,30 @@
+<header class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container">
+		<div class="navbar-header">
+			<button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#bs3-navbar">
+				<span class="sr-only">토글 메뉴</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span> 
+			</button>
+			<a href="/" class="navbar-brand">NodeJs-Express</a>
+		</div>
+		<div class="collapse navbar-collapse" id="bs3-navbar">
+			<ul class="nav navbar-nav">
+				<li><a href="/topics">Topics</a></li>
+				<li><a href="/">Link01</a></li>
+				<li><a href="/">Link02</a></li>
+				<li><a href="/">Link03</a></li>
+			</ul>
+			<ul class="nav navbar-nav navbar-right">
+				{% if whoami %}
+					<li><a href="/auth/profile"><span class="glyphicon glyphicon-user"></span>&nbsp; {{ whoami }} 님</a></li>
+					<li><a href="/auth/logout"><span class="glyphicon glyphicon-log-out"></span>&nbsp; 로그아웃</a></li>
+				{% else %}
+					<li><a href="/auth/login"><span class="glyphicon glyphicon-log-in"></span>&nbsp; 로그인</a></li>
+					<li><a href="/auth/register"><span class="glyphicon glyphicon-check"></span>&nbsp; 회원가입</a></li>
+				{% endif %}
+			</ul>
+		</div>
+	</div>
+</header>

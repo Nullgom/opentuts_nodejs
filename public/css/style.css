@@ -16,12 +16,20 @@ body > .container {
 	list-style:none;
 	font-size: 1.2em;
 }
+.page-header {
+	margin-top: 10px;
+	padding: 0 20px 10px;
+}
+.page-header .top-btns{
+	margin-top:45px;
+}
 #footer {
 	position: absolute;
 	bottom: 0;
 	width: 100%;
 	height: 60px;
 	background-color: #f6f6f6;
+	padding-top: 1.6rem;
 }
 #footer > .container {
 	padding-right: 15px;
